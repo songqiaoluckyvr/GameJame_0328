@@ -109,6 +109,10 @@ public class PlayerHealth : MonoBehaviour
     {
         ModifyHealth(_antidoteHealthRestore);
         OnAntidoteCollected?.Invoke();
+        if (_debugMode)
+        {
+            Debug.Log($"[PlayerHealth] Collected antidote, restored {_antidoteHealthRestore:F1} health, {CurrentHealth}");
+        }
     }
 
     public void ResetHealth()
