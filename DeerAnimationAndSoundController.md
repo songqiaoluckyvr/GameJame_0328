@@ -12,14 +12,16 @@ public class DeerAnimationAndSoundController : MonoBehaviour
 - Requires an `Animator` component on the same GameObject
 - Will automatically add an `AudioSource` component if not present
 
-## Animation Parameters
-The controller uses these hardcoded animation parameter names which must match the Animator controller:
-- `Idle` - Boolean parameter for idle state
-- `Run` - Boolean parameter for running state
-- `Jump` - Boolean parameter for jumping state
-- `Death` - Boolean parameter for death state
-- `Spin` - Boolean parameter for spin state
-- `Speed` - Float parameter for run speed variation
+## Animation States
+The controller uses these hardcoded animation state names from the existing deer animator:
+- `Idle_A`, `Idle_B`, `Idle_C` - Idle animation states
+- `Jump` - Jumping animation state
+- `Death` - Death animation state
+- `Spin` - Spin animation state
+- `Run` - Running animation state
+
+## Animation Settings
+- `_spinDuration` - Controls how long the Spin animation plays before returning to idle (default: 1.0 second)
 
 ## Sound Effects
 The controller requires the following sound clips to be assigned:
@@ -33,40 +35,44 @@ Sound clips are specified via SerializedField inputs in the inspector. The contr
 
 ### SetIdle()
 Sets the deer to the idle animation state.
-- Disables all other animation states
-- Sets Idle parameter to true and Speed to 0
+- Stops any ongoing Spin animation coroutine
+- Plays the Idle_A animation state
 - Will not execute if the deer is dead
 
 ### Run(float speed)
 Activates the deer's running animation at the specified speed.
 - **Parameters:**
   - `speed`: The speed at which the deer runs (0.5-2.0 recommended)
-- Disables all other animation states
-- Sets Run parameter to true and Speed to the provided value
+- Stops any ongoing Spin animation coroutine
+- Plays the Run animation state
+- Adjusts the Animator's speed property to control run speed
 - Will not execute if the deer is dead
 
 ### Jump()
 Executes the deer's jumping animation and plays the associated sound effect.
-- Disables all other animation states
-- Sets Jump parameter to true
+- Stops any ongoing Spin animation coroutine
+- Plays the Jump animation state
+- Freezes the animation on the last frame to prevent looping
 - Plays the jump sound effect
-- Remains in the jump animation until explicitly told to change state
 - Will not execute if the deer is dead
 - Logs a warning if the jump sound is not assigned
 
 ### Die()
 Activates the deer's death animation and plays the death sound effect.
-- Disables all other animation states
-- Sets Death parameter to true
+- Stops any ongoing Spin animation coroutine
+- Plays the Death animation state
 - Plays the death sound effect
 - Sets internal `_isDead` flag to prevent further animation changes
 - Will execute only once (subsequent calls are ignored)
 - Logs a warning if the death sound is not assigned
 
 ### TakeAntidote()
-Plays the deer's spin animation and triggers the antidote sound effect.
-- Disables all other animation states
-- Sets Spin parameter to true
+Plays the deer's spin animation for about 1 second and triggers the antidote sound effect.
+- Stops any ongoing Spin animation coroutine
+- Starts a coroutine that:
+  - Plays the Spin animation state
+  - Waits for the specified duration (default: 1 second)
+  - Automatically returns to idle state
 - Plays the antidote sound effect
 - Specifically used when the deer consumes an antidote item
 - Will not execute if the deer is dead
@@ -122,6 +128,8 @@ void Update()
 - The controller initializes in the Idle state by default
 - Automatically adds an AudioSource component if not present on the GameObject
 - The AudioSource is used to play sound effects via PlayOneShot
-- Animation state transitions are handled by disabling all other states before enabling the desired one
+- The controller uses Animator.Play() to directly play animation states by name
+- The Jump animation is frozen at the end to prevent looping
+- The Spin animation plays for about 1 second and then returns to idle
 - The Die() method sets an internal flag to prevent any further animation changes
-- Logs warning messages when sound clips are not assigned and their corresponding methods are called 
+- Logs warning messages when sound clips are not assigned 

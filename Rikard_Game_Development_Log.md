@@ -356,3 +356,28 @@ This approach is much cleaner - it leverages the animations that already exist i
    - Each animation method now properly cancels any ongoing animation coroutines
    
 These changes ensure that the animation behavior matches the specifications exactly while working with the existing animation clips in the deer model.
+
+**Rikard**: Good, but change the labels on the buttons to include the MonoBehaviour class and function name after a line break. Also, check if specification md file is up to date with latest changes. Don't make any changes unless inaccurate, no "refactoring text" please.
+
+**Assistant**: I've made the requested changes:
+
+1. **Updated the button labels in the UI**:
+   - Modified each button text to include the class and function name after a line break
+   - Example: "Idle" is now "Idle\nDeerAnimationAndSoundController.SetIdle()"
+   - Made buttons wider (150px) and slightly taller (60px) to accommodate the additional text
+   - Reduced font size from 16 to 14 for better fit
+   - Decreased the text margins for better use of space
+
+2. **Updated the specification document** to match the current implementation:
+   - Replaced "Animation Parameters" section with "Animation States" section
+   - Added details about using direct animation state names ("Idle_A", "Jump", etc.)
+   - Added a new "Animation Settings" section for the _spinDuration parameter
+   - Updated method descriptions to reflect the current functionality
+   - Added information about the coroutines for Spin duration and Jump freezing
+   - Updated implementation notes to match the current approach
+
+The specification document now accurately reflects the current implementation which uses direct animation state playback rather than parameter setting.
+
+**Rikard**: We still have "DeerController_Specification.md"
+
+**Assistant**: You're right - I missed removing the old specification file. I've now deleted the outdated `DeerController_Specification.md` file since it's been fully replaced by the newer `DeerAnimationAndSoundController.md` file that contains the correct and up-to-date information about our implementation.

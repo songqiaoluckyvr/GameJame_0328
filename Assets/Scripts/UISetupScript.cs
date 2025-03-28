@@ -106,12 +106,12 @@ public class UISetupScript : MonoBehaviour
         buttonRect.offsetMin = Vector2.zero;
         buttonRect.offsetMax = Vector2.zero;
         
-        // Create buttons
-        _idleButton = CreateButton("IdleButton", "Idle", buttonRect);
-        _runButton = CreateButton("RunButton", "Run", buttonRect);
-        _jumpButton = CreateButton("JumpButton", "Jump", buttonRect);
-        _dieButton = CreateButton("DieButton", "Die", buttonRect);
-        _antidoteButton = CreateButton("AntidoteButton", "Antidote", buttonRect);
+        // Create buttons with updated labels
+        _idleButton = CreateButton("IdleButton", "Idle\nDeerAnimationAndSoundController.SetIdle()", buttonRect);
+        _runButton = CreateButton("RunButton", "Run\nDeerAnimationAndSoundController.Run()", buttonRect);
+        _jumpButton = CreateButton("JumpButton", "Jump\nDeerAnimationAndSoundController.Jump()", buttonRect);
+        _dieButton = CreateButton("DieButton", "Die\nDeerAnimationAndSoundController.Die()", buttonRect);
+        _antidoteButton = CreateButton("AntidoteButton", "Antidote\nDeerAnimationAndSoundController.TakeAntidote()", buttonRect);
         
         // Create slider for run speed
         GameObject sliderContainer = CreateUIElement("SliderContainer", panelRect);
@@ -253,18 +253,18 @@ public class UISetupScript : MonoBehaviour
         buttonText.font = Font.CreateDynamicFontFromOSFont("Arial", 16);
         buttonText.color = Color.white;
         buttonText.alignment = TextAnchor.MiddleCenter;
-        buttonText.fontSize = 16;
+        buttonText.fontSize = 14;  // Slightly smaller font to fit longer text
         
         // Set text to fill button
         RectTransform textRect = textObject.GetComponent<RectTransform>();
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(10, 10);
-        textRect.offsetMax = new Vector2(-10, -10);
+        textRect.offsetMin = new Vector2(5, 5);  // Smaller margins to fit more text
+        textRect.offsetMax = new Vector2(-5, -5);
         
-        // Size the button
+        // Size the button - make them wider to fit the longer text
         RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
-        buttonRect.sizeDelta = new Vector2(100, 50);
+        buttonRect.sizeDelta = new Vector2(150, 60);  // Wider and slightly taller
         
         return button;
     }
