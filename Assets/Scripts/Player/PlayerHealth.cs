@@ -8,9 +8,9 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private float _maxHealth = 100f;
     [SerializeField] private float _startingHealth = 100f;
     [SerializeField] private float _healthDrainRate = 1f;
-    [SerializeField] private float _antidoteHealthRestore = 40f;
+    [SerializeField] private float _antidoteHealthRestore = 20f;
     [SerializeField] private float _criticalHealthThreshold = 30f;
-    [SerializeField] private bool _debugMode = true;
+    [SerializeField] private bool _debugMode = false;
     #endregion
 
     #region Events
@@ -51,7 +51,10 @@ public class PlayerHealth : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha0) || Input.GetKeyDown(KeyCode.Keypad0))
         {
             ModifyHealth(10f);
-            if (_debugMode) Debug.Log($"[PlayerHealth] Added 10 health. Current health: {_currentHealth}");
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha9) || Input.GetKeyDown(KeyCode.Keypad9))
+        {
+            ModifyHealth(-10f);
         }
     }
     #endregion
@@ -72,11 +75,16 @@ public class PlayerHealth : MonoBehaviour
         if (_currentHealth != previousHealth)
         {
             OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
+            
         }
 
         if (_currentHealth <= 0f && !_isDead)
         {
             _isDead = true;
+            if (_debugMode)
+            {
+                Debug.Log($"[PlayerHealth] Health depleted. Triggering death sequence");
+            }
             OnHealthDepleted?.Invoke();
         }
     }
@@ -110,6 +118,11 @@ public class PlayerHealth : MonoBehaviour
         _isInCriticalHealth = false;
         _isDrainPaused = false;
         OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
+
+        if (_debugMode)
+        {
+            Debug.Log($"[PlayerHealth] Health reset to {_currentHealth:F1}");
+        }
     }
 
     public void SetDrainRate(float newRate)
@@ -117,8 +130,23 @@ public class PlayerHealth : MonoBehaviour
         _healthDrainRate = Mathf.Max(0f, newRate);
     }
 
-    public void PauseDrain() => _isDrainPaused = true;
-    public void ResumeDrain() => _isDrainPaused = false;
+    public void PauseDrain()
+    {
+        _isDrainPaused = true;
+        if (_debugMode)
+        {
+            Debug.Log("[PlayerHealth] Health drain paused");
+        }
+    }
+
+    public void ResumeDrain()
+    {
+        _isDrainPaused = false;
+        if (_debugMode)
+        {
+            Debug.Log("[PlayerHealth] Health drain resumed");
+        }
+    }
     #endregion
 
     #region Collision Detection
