@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerMovement : MonoBehaviour
@@ -7,8 +8,8 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private float _moveSpeed = 7f;
     [SerializeField] private float _jumpForce = 12f;
-    [SerializeField] private float _groundCheckDistance = 0.2f;
-    [SerializeField] private LayerMask _groundLayer;
+    [SerializeField] private float _jumpCooldown = 0.3f;
+    [SerializeField] private float _fallMultiplier = 2.5f;
     [SerializeField] private bool _debugMode = true;
     #endregion
 
@@ -16,7 +17,7 @@ public class PlayerMovement : MonoBehaviour
     private bool _isMovementEnabled = true;
     private bool _isGrounded;
     private bool _isFacingRight = true;
-    private bool _wasGroundedLastFrame;
+    private bool _canJump = true;
     #endregion
 
     #region Component References
@@ -32,7 +33,7 @@ public class PlayerMovement : MonoBehaviour
         
         if (_debugMode)
         {
-            Debug.Log($"[PlayerMovement] Initialized with groundLayer: {_groundLayer.value}");
+            Debug.Log("[PlayerMovement] Initialized player movement system");
         }
     }
 
@@ -43,56 +44,60 @@ public class PlayerMovement : MonoBehaviour
         // Get horizontal input (A/D or Left/Right arrows)
         _horizontalInput = Input.GetAxisRaw("Horizontal");
 
-        // Check if grounded first
-        CheckGrounded();
-
         // Handle jump input (Space)
         if (Input.GetButtonDown("Jump"))
         {
-            if (_isGrounded)
+            if (_isGrounded && _canJump)
             {
                 Jump();
                 if (_debugMode) Debug.Log("[PlayerMovement] Jump executed!");
             }
             else if (_debugMode)
             {
-                Debug.Log("[PlayerMovement] Jump attempted but not grounded!");
+                Debug.Log($"[PlayerMovement] Jump attempted but conditions not met. Grounded: {_isGrounded}, CanJump: {_canJump}");
             }
         }
 
         // Update facing direction
         UpdateFacing();
-
-        // Debug movement state
-        if (_debugMode)
-        {
-            Debug.DrawRay(transform.position, Vector3.down * _groundCheckDistance, _isGrounded ? Color.green : Color.red);
-        }
     }
 
     private void FixedUpdate()
     {
         if (!_isMovementEnabled) return;
         Move();
-
-        if (_debugMode)
-        {
-            Debug.Log($"[PlayerMovement] Velocity: {_rb.velocity}, IsGrounded: {_isGrounded}");
-        }
     }
     #endregion
 
     #region Movement Methods
     private void Move()
     {
-        // Set velocity directly for responsive movement
         Vector3 currentVelocity = _rb.velocity;
-        _rb.velocity = new Vector3(_horizontalInput * _moveSpeed, currentVelocity.y, 0);
+        
+        // Apply horizontal movement
+        float targetXVelocity = _horizontalInput * _moveSpeed;
+        
+        // Apply increased gravity when falling
+        float yVelocity = currentVelocity.y;
+        if (yVelocity < 0)
+        {
+            yVelocity += Physics.gravity.y * (_fallMultiplier - 1) * Time.fixedDeltaTime;
+        }
+        
+        _rb.velocity = new Vector3(targetXVelocity, yVelocity, 0);
     }
 
     private void Jump()
     {
         _rb.velocity = new Vector3(_rb.velocity.x, _jumpForce, 0);
+        StartCoroutine(JumpCooldown());
+    }
+
+    private IEnumerator JumpCooldown()
+    {
+        _canJump = false;
+        yield return new WaitForSeconds(_jumpCooldown);
+        _canJump = true;
     }
 
     private void UpdateFacing()
@@ -109,16 +114,22 @@ public class PlayerMovement : MonoBehaviour
     }
     #endregion
 
-    #region Check Methods
-    private void CheckGrounded()
+    #region Collision Methods
+    private void OnCollisionEnter(Collision collision)
     {
-        _wasGroundedLastFrame = _isGrounded;
-        _isGrounded = Physics.Raycast(transform.position, Vector3.down, _groundCheckDistance, _groundLayer);
-
-        // Log ground state changes
-        if (_debugMode && _wasGroundedLastFrame != _isGrounded)
+        if (collision.gameObject.CompareTag("Ground"))
         {
-            Debug.Log($"[PlayerMovement] Ground state changed: {_isGrounded}");
+            _isGrounded = true;
+            if (_debugMode) Debug.Log("[PlayerMovement] Entered ground contact");
+        }
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            _isGrounded = false;
+            if (_debugMode) Debug.Log("[PlayerMovement] Left ground contact");
         }
     }
     #endregion

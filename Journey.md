@@ -274,3 +274,56 @@ Investigated and fixed the PlayerMovement script's ground check issues:
    - Moved ground check before jump input handling
    - Improved code organization and comments
    - Added more descriptive debug messages 
+
+### Development Progress - March 28, 2024
+
+#### Initial Project Setup
+1. Created Unity project for "Antidote Seeker"
+2. Set up Git repository and pushed to remote
+3. Established basic project structure
+
+#### Player Movement Implementation
+1. Created PlayerMovement script with basic 2.5D movement
+2. Implemented ground detection using collision events
+3. Added jump mechanics with 0.3s cooldown
+4. Enhanced falling mechanics with increased gravity multiplier
+
+#### Health System Development
+1. Implemented PlayerHealth script with:
+   - Health drain system (100 to 0 in 1 second)
+   - Event system for health changes
+   - Antidote collection functionality
+   - Critical health state monitoring
+
+2. Created UI Health Bar system:
+   - Set up UI folder structure
+   - Implemented HealthBar script with:
+     - 300px max width scaling with 100 health
+     - Color changes (green to red) at critical health
+     - Event-based updates
+     - Clean event handling
+
+#### Health System Enhancements
+- Added debug functionality to test health restoration:
+  - Implemented a debug mode toggle with `_debugMode` serialized field
+  - Added keyboard input detection for health testing (0 key adds 10 health points)
+  - Health restoration respects max health limit of 100
+  - Debug messages show current health after restoration when debug mode is enabled
+  - Health bar UI updates automatically through event system
+- Debug features help test:
+  - Health restoration mechanics
+  - Maximum health clamping
+  - UI update responsiveness
+  - Event system functionality
+  - Health drain and restoration interaction
+
+#### Next Steps
+- Implement antidote spawning system
+- Add obstacles and hazards
+- Create level design
+- Implement game over and restart mechanics
+
+#### Technical Notes
+- Using Unity version 2022.3.29f1
+- Project follows component-based architecture
+- Event-driven communication between systems 
