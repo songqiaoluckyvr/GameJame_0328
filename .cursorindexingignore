@@ -1,0 +1,75 @@
+# Project Settings and Configuration
+Library/
+Temp/
+Logs/
+UserSettings/
+obj/
+Build/
+MemoryCaptures/
+AssetBundleCache/
+SteamContentBuilder/
+RedistributableBatchFiles/
+
+
+# Model related Files
+**/*.fbx
+**/*.FBX
+**/*.obj
+**/*.max
+**/*.mat
+**/*.anim
+**/*.asset
+
+# Audio Files
+**/*.wav
+**/*.mp3
+**/*.ogg
+**/*.aif
+**/*.bnk
+**/*.wem
+
+# Image Files
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.tga
+**/*.tif
+**/*.tiff
+**/*.bmp
+**/*.gif
+**/*.exr
+**/*.hdr
+**/*.cubemap
+
+# Other Art Types
+**/*.controller
+**/*.mask
+**/*.terrainlayer
+**/*.guiskin
+**/*.mp4
+
+# Project Files
+**/*.meta
+**/*.csproj
+**/*.dll
+**/*.bundle
+**/*.sln
+**/*.bat
+**/*.unitypackage
+**/*.zip
+**/*.pdf
+
+
+# Whitelist important development files
+!**/*.cs
+!**/*.shader
+!**/*.compute
+!**/*.cginc
+!**/*.hlsl
+!**/*.json
+!**/*.xml
+!**/*.txt
+!**/*.md
+!**/*.yaml
+!**/*.yml
+
