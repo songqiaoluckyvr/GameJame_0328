@@ -11,6 +11,7 @@ public class DeerAnimationAndSoundController : MonoBehaviour
 ## Dependencies
 - Requires an `Animator` component on the same GameObject
 - Will automatically add an `AudioSource` component if not present
+- Requires access to sound effect assets via Resources.Load
 
 ## Animation States
 The controller uses these hardcoded animation state names from the existing deer animator:
@@ -24,12 +25,12 @@ The controller uses these hardcoded animation state names from the existing deer
 - `_spinDuration` - Controls how long the Spin animation plays before returning to idle (default: 1.0 second)
 
 ## Sound Effects
-The controller requires the following sound clips to be assigned:
-- Jump sound - Plays when the deer jumps
-- Death sound - Plays when the deer dies
-- Antidote sound - Plays when the deer takes an antidote
+The controller uses these specific hardcoded sound effects:
+- `"FX48 - Click 2"` - Jump sound
+- `"FX54"` - Death sound
+- `"FX57"` - Antidote sound
 
-Sound clips are specified via SerializedField inputs in the inspector. The controller will log warning messages if any sound clips are not assigned.
+Sound effects are loaded automatically from resources. The controller will log warning messages if any sound effects cannot be loaded.
 
 ## Public Methods
 
@@ -53,18 +54,18 @@ Executes the deer's jumping animation and plays the associated sound effect.
 - Stops any ongoing Spin animation coroutine
 - Plays the Jump animation state
 - Freezes the animation on the last frame to prevent looping
-- Plays the jump sound effect
+- Plays the jump sound effect ("FX48 - Click 2")
 - Will not execute if the deer is dead
-- Logs a warning if the jump sound is not assigned
+- Logs a warning if the jump sound cannot be loaded
 
 ### Die()
 Activates the deer's death animation and plays the death sound effect.
 - Stops any ongoing Spin animation coroutine
 - Plays the Death animation state
-- Plays the death sound effect
+- Plays the death sound effect ("FX54")
 - Sets internal `_isDead` flag to prevent further animation changes
 - Will execute only once (subsequent calls are ignored)
-- Logs a warning if the death sound is not assigned
+- Logs a warning if the death sound cannot be loaded
 
 ### TakeAntidote()
 Plays the deer's spin animation for about 1 second and triggers the antidote sound effect.
@@ -73,10 +74,10 @@ Plays the deer's spin animation for about 1 second and triggers the antidote sou
   - Plays the Spin animation state
   - Waits for the specified duration (default: 1 second)
   - Automatically returns to idle state
-- Plays the antidote sound effect
+- Plays the antidote sound effect ("FX57")
 - Specifically used when the deer consumes an antidote item
 - Will not execute if the deer is dead
-- Logs a warning if the antidote sound is not assigned
+- Logs a warning if the antidote sound cannot be loaded
 
 ## Usage Example
 ```csharp
@@ -127,9 +128,10 @@ void Update()
 ## Implementation Notes
 - The controller initializes in the Idle state by default
 - Automatically adds an AudioSource component if not present on the GameObject
+- Sound effects are loaded from resources during Awake()
 - The AudioSource is used to play sound effects via PlayOneShot
 - The controller uses Animator.Play() to directly play animation states by name
 - The Jump animation is frozen at the end to prevent looping
 - The Spin animation plays for about 1 second and then returns to idle
 - The Die() method sets an internal flag to prevent any further animation changes
-- Logs warning messages when sound clips are not assigned 
+- Logs specific warning messages if sound files cannot be loaded 

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.IO;
 
 /// <summary>
 /// Controller for the deer character that handles animations and sound effects using the existing animation states
@@ -19,11 +20,16 @@ public class DeerAnimationAndSoundController : MonoBehaviour
     [Header("Animation Settings")]
     [SerializeField] public float _spinDuration = 1.0f;
     
-    // Audio clips
-    [Header("Audio")]
-    [SerializeField] public AudioClip _jumpSound;
-    [SerializeField] public AudioClip _deathSound;
-    [SerializeField] public AudioClip _antidoteSound;
+    // Sound effect paths - these are the actual locations and filenames of the sounds
+    private const string SOUND_BASE_PATH = "Universal UI, Game & Notification Sound Effects";
+    private const string SOUND_JUMP = "FX48 - Click 2.wav";
+    private const string SOUND_DEATH = "FX54.wav";
+    private const string SOUND_ANTIDOTE = "FX57.wav";
+    
+    // Sound effect cache
+    private AudioClip _jumpSound;
+    private AudioClip _deathSound;
+    private AudioClip _antidoteSound;
 
     // Component references
     private Animator _animator;
@@ -48,6 +54,62 @@ public class DeerAnimationAndSoundController : MonoBehaviour
         {
             Debug.LogError("Animator component is missing on the deer GameObject.");
         }
+        
+        // Load sound effects
+        LoadSoundEffects();
+    }
+    
+    private void LoadSoundEffects()
+    {
+        // Construct the full paths to the sound files
+        string jumpPath = Path.Combine(SOUND_BASE_PATH, SOUND_JUMP);
+        string deathPath = Path.Combine(SOUND_BASE_PATH, SOUND_DEATH);
+        string antidotePath = Path.Combine(SOUND_BASE_PATH, SOUND_ANTIDOTE);
+        
+        // Load the sound files directly from their absolute paths
+        _jumpSound = LoadAudioClip(jumpPath);
+        _deathSound = LoadAudioClip(deathPath);
+        _antidoteSound = LoadAudioClip(antidotePath);
+        
+        // Log result of loading attempt
+        Debug.Log($"Sound loading results: Jump={_jumpSound != null}, Death={_deathSound != null}, Antidote={_antidoteSound != null}");
+    }
+    
+    private AudioClip LoadAudioClip(string path)
+    {
+        // Try to load the audio clip
+        AudioClip clip = null;
+        
+#if UNITY_EDITOR
+        // In editor, we can load directly from assets
+        string assetPath = "Assets/" + path;
+        clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(assetPath);
+        
+        if (clip == null)
+        {
+            Debug.LogWarning($"Could not load sound from path: {assetPath}");
+        }
+#else
+        // At runtime, we need to use WWW or UnityWebRequest to load audio from file
+        // This is a simplified approach and might need to be adjusted based on your build platform
+        string fullPath = Path.Combine(Application.dataPath, path);
+        using (UnityEngine.Networking.UnityWebRequest www = UnityEngine.Networking.UnityWebRequestMultimedia.GetAudioClip("file://" + fullPath, AudioType.WAV))
+        {
+            www.SendWebRequest();
+            while (!www.isDone) { } // Simple synchronous wait
+
+            if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+            {
+                clip = UnityEngine.Networking.DownloadHandlerAudioClip.GetContent(www);
+            }
+            else
+            {
+                Debug.LogWarning($"Could not load sound from path: {fullPath}. Error: {www.error}");
+            }
+        }
+#endif
+        
+        return clip;
     }
 
     private void Start()
@@ -121,7 +183,7 @@ public class DeerAnimationAndSoundController : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Jump sound is not assigned to the DeerAnimationAndSoundController.");
+            Debug.LogWarning($"Jump sound '{SOUND_JUMP}' not loaded. Sound effect will not play.");
         }
     }
 
@@ -151,7 +213,7 @@ public class DeerAnimationAndSoundController : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Death sound is not assigned to the DeerAnimationAndSoundController.");
+            Debug.LogWarning($"Death sound '{SOUND_DEATH}' not loaded. Sound effect will not play.");
         }
     }
 
@@ -178,7 +240,7 @@ public class DeerAnimationAndSoundController : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Antidote sound is not assigned to the DeerAnimationAndSoundController.");
+            Debug.LogWarning($"Antidote sound '{SOUND_ANTIDOTE}' not loaded. Sound effect will not play.");
         }
     }
 

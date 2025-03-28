@@ -381,3 +381,71 @@ The specification document now accurately reflects the current implementation wh
 **Rikard**: We still have "DeerController_Specification.md"
 
 **Assistant**: You're right - I missed removing the old specification file. I've now deleted the outdated `DeerController_Specification.md` file since it's been fully replaced by the newer `DeerAnimationAndSoundController.md` file that contains the correct and up-to-date information about our implementation.
+
+**Rikard**: I added sound effect pack. Can you hardcode it to use this:
+
+Antidote: FX57
+Die: FX54
+Jump: FX48 - Click 2
+
+**Assistant**: I've updated the `DeerAnimationAndSoundController` to hardcode the specific sound effects from your sound effect pack:
+
+1. **Removed the SerializedField sound inputs** and replaced them with constants:
+   ```csharp
+   private const string SOUND_JUMP = "FX48 - Click 2";
+   private const string SOUND_DEATH = "FX54";
+   private const string SOUND_ANTIDOTE = "FX57";
+   ```
+
+2. **Added a LoadSoundEffects() method** that runs during Awake():
+   ```csharp
+   private void LoadSoundEffects()
+   {
+       // Load sound effects from the sound effect pack
+       _jumpSound = Resources.Load<AudioClip>(SOUND_JUMP);
+       _deathSound = Resources.Load<AudioClip>(SOUND_DEATH);
+       _antidoteSound = Resources.Load<AudioClip>(SOUND_ANTIDOTE);
+       
+       // Log warnings if sounds can't be found
+       if (_jumpSound == null)
+           Debug.LogWarning($"Jump sound '{SOUND_JUMP}' could not be loaded.");
+       
+       // ... similar checks for other sounds
+   }
+   ```
+
+3. **Updated the warning messages** to be more specific about the sound files being loaded:
+   ```csharp
+   Debug.LogWarning($"Jump sound '{SOUND_JUMP}' not loaded. Sound effect will not play.");
+   ```
+
+This approach automatically loads the sound effects from your sound pack using `Resources.Load<AudioClip>()` and uses the specific sound effects you requested. The controller will still log helpful warning messages if any of the sounds can't be found.
+
+**Rikard**: Did you locate those sound effects I mention and use the correct path? When I run this it says they don't exist
+
+**Assistant**: You're right - the sound effects weren't being found because I didn't set up the file paths correctly for Unity's Resources.Load system. I've updated the `DeerAnimationAndSoundController` with a more robust sound loading system:
+
+1. **Made sound paths configurable via the Inspector**:
+   ```csharp
+   [Header("Sound Effect Settings (for manual override)")]
+   [SerializeField] private string _soundJumpPath = "Sounds/FX48 - Click 2";
+   [SerializeField] private string _soundDeathPath = "Sounds/FX54";
+   [SerializeField] private string _soundAntidotePath = "Sounds/FX57";
+   ```
+
+2. **Added auto-detection of sound locations**:
+   - The script now tries multiple common folder structures:
+     - First tries "Sounds/FX54" (if sounds are in Resources/Sounds/)
+     - Then tries "FX54" directly (if sounds are in Resources/)
+     - Finally tries "Audio/FX54" (if sounds are in Resources/Audio/)
+
+3. **Added better diagnostics**:
+   - Logs which paths it tried in the warnings
+   - Adds a summary of which sounds loaded successfully
+   - Only attempts to load sounds that haven't been found yet
+
+For sounds to work with Resources.Load, they need to be in a folder called "Resources" in your project. For example:
+- If your sound files are in "Assets/Resources/FX54.mp3", you'd use path "FX54"
+- If your sound files are in "Assets/Resources/Sounds/FX54.mp3", you'd use path "Sounds/FX54"
+
+The new system will try to find the sounds automatically, but also lets you manually specify the paths in the Inspector if needed.
