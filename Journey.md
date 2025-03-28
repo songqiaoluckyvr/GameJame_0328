@@ -99,4 +99,17 @@ Acknowledged the request to maintain documentation of our interactions in Journe
 Checked the scene and found that a new "Sphere" object has been added to the SampleScene, which now contains:
 - Main Camera
 - Directional Light
-- Sphere (newly added) 
+- Sphere (newly added)
+
+#### User
+> help me setup the git repo for this project
+
+#### Assistant
+Set up Git repository with the following steps:
+1. Created `.gitignore` file with Unity-specific patterns
+2. Initialized Git repository with `git init`
+3. Renamed default branch to 'main'
+4. Added all files to staging
+5. Created initial commit with project setup and folder structure
+
+The repository is now ready for version control with appropriate Unity-specific ignore patterns in place. 
