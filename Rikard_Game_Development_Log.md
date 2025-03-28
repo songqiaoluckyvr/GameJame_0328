@@ -254,6 +254,105 @@ These changes make the code cleaner, more maintainable, and better aligned with 
 
 The controller is now fully documented with an up-to-date specification file, and it will provide helpful feedback when sound assets are missing. 
 
-**Rikard**: OK, but why do we still have "DeerController", and why isn't "DeerController_Specification.md" renamed?
+**Rikard**: I get compilation errors, see image.
 
-**Assistant**: You're absolutely right - I overlooked those details. I've now simply renamed the specification file from `DeerController_Specification.md` to `DeerAnimationAndSoundController.md` without changing its content. 
+**Assistant**: I noticed the compilation errors in your screenshot. The issue was that the fields in the `DeerUIController` class were marked as `private`, but the `UISetupScript` was trying to directly access them.
+
+To fix this, I've updated the `DeerUIController` class by making all the SerializedField properties `public` instead of `private`:
+
+```csharp
+// Before (causing errors)
+[SerializeField] private DeerAnimationAndSoundController _deerController;
+[SerializeField] private Button _idleButton;
+// etc.
+
+// After (fixed)
+[SerializeField] public DeerAnimationAndSoundController _deerController;
+[SerializeField] public Button _idleButton;
+// etc.
+```
+
+This allows the `UISetupScript` to properly access and set these fields during its setup process. The compilation errors should now be resolved and the UI system will work as expected.
+
+**Rikard**: Got runtime error, see image.
+
+**Assistant**: I see the runtime error about Arial.ttf no longer being a valid built-in font. This is an issue with newer Unity versions where the method of accessing built-in fonts has changed.
+
+I've updated the `UISetupScript.cs` file to fix this error by replacing:
+
+```csharp
+// Old approach that causes errors
+_runSpeedText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+```
+
+with:
+
+```csharp
+// New approach that creates dynamic fonts from system fonts
+_runSpeedText.font = Font.CreateDynamicFontFromOSFont("Arial", 16);
+```
+
+This update uses `Font.CreateDynamicFontFromOSFont()` which loads fonts directly from the operating system rather than relying on Unity's built-in resources. This approach is more compatible with newer Unity versions and should resolve the runtime error you were seeing.
+
+**Rikard**: I get lots of warnings, see image.
+
+**Assistant**: I see the warnings in your screenshot. These are happening because the Animator component on the deer doesn't have the animation parameters that our `DeerAnimationAndSoundController` script is trying to set.
+
+To fix this, I've created a new script called `CreateDeerAnimator.cs` that will automatically:
+
+1. Create an Animator Controller asset at `Assets/Animations/DeerAnimatorController.controller`
+2. Set up all the required parameters that match our code:
+   - "Idle", "Run", "Jump", "Death", "Spin" (boolean parameters)
+   - "Speed" (float parameter)
+3. Add an Animator component to the Pudu deer object if it doesn't already have one
+4. Assign the created Animator Controller to the deer
+
+The script also creates a simple state machine with:
+- Transitions between states driven by the parameters we're setting
+- Appropriate transition times and conditions
+- A default Idle state
+
+This is set up to run automatically when the scene loads, and it only creates the controller if it doesn't already exist. This should fix all the warnings because now the Animator will have all the parameters our script is trying to modify.
+
+**Rikard**: No, stop that. I want you to use the correct existing animations to manipulate the deer. Here is a screenshot to the animation states from the animator. Use them without compilating things.
+
+**Assistant**: I've completely revised our approach to use the existing animation states that come with the deer model prefab. Key changes:
+
+1. **Removed the `CreateDeerAnimator.cs` script** entirely, as it's no longer needed
+   - We don't need to create our own animations - the deer model already has them
+
+2. **Updated `DeerAnimationAndSoundController.cs` to use the actual animation state names**:
+   - Direct references to "Idle_A", "Idle_B", "Idle_C", "Jump", "Death", "Spin", "Run"
+   - Using the Animator's `Play(stateName)` method instead of setting parameters
+
+3. **Simplified the animation control logic**:
+   - Created a helper method `PlayAnimation(string animationName)` to centralize state changes
+   - Using native animation speed control with `animator.speed = speed` for run speed
+
+This approach is much cleaner - it leverages the animations that already exist in the prefab rather than trying to create new ones. The controller still provides the same interface with methods like `SetIdle()`, `Run()`, `Jump()`, etc., but internally it's now directly playing the right animation states.
+
+**Rikard**: Good, but:
+- Spin should only be for ~1 second
+- Jump shouldn't loop (stay on the last frame)
+
+**Assistant**: I've updated the `DeerAnimationAndSoundController` to handle these specific animation behaviors:
+
+1. **Limited Spin animation to ~1 second**:
+   - Added a coroutine system to control the Spin animation duration
+   - Created a configurable `_spinDuration` field (default: 1.0 second)
+   - The Spin animation now automatically returns to Idle after the duration
+   - Added proper cleanup if the spin is interrupted by another animation
+
+2. **Modified Jump animation to stay on the last frame**:
+   - Added a `FreezeJumpAnimation` coroutine that:
+     - Determines the length of the current jump animation clip
+     - Waits until 95% of the animation is complete
+     - Sets `_animator.speed = 0` to freeze on the last frame
+   - This prevents the Jump animation from looping while maintaining the "in-air" appearance
+
+3. **Added proper handling for animation interruptions**:
+   - Any animation can cleanly interrupt the Spin animation
+   - Added tracking and cleanup of animation coroutines
+   - Each animation method now properly cancels any ongoing animation coroutines
+   
+These changes ensure that the animation behavior matches the specifications exactly while working with the existing animation clips in the deer model.

@@ -1,28 +1,35 @@
 using UnityEngine;
+using System.Collections;
 
 /// <summary>
-/// Controller for the deer character that handles animations and sound effects
+/// Controller for the deer character that handles animations and sound effects using the existing animation states
 /// </summary>
 public class DeerAnimationAndSoundController : MonoBehaviour
 {
-    // Animation parameter constants
-    private const string ANIM_IDLE = "Idle";
-    private const string ANIM_RUN = "Run";
+    // Animation state names from the model's animator
+    private const string ANIM_IDLE_A = "Idle_A";
+    private const string ANIM_IDLE_B = "Idle_B";
+    private const string ANIM_IDLE_C = "Idle_C";
     private const string ANIM_JUMP = "Jump";
     private const string ANIM_DEATH = "Death";
     private const string ANIM_SPIN = "Spin";
-    private const string ANIM_SPEED = "Speed";
+    private const string ANIM_RUN = "Run";
 
+    // Animation settings
+    [Header("Animation Settings")]
+    [SerializeField] public float _spinDuration = 1.0f;
+    
     // Audio clips
     [Header("Audio")]
-    [SerializeField] private AudioClip _jumpSound;
-    [SerializeField] private AudioClip _deathSound;
-    [SerializeField] private AudioClip _antidoteSound;
+    [SerializeField] public AudioClip _jumpSound;
+    [SerializeField] public AudioClip _deathSound;
+    [SerializeField] public AudioClip _antidoteSound;
 
     // Component references
     private Animator _animator;
     private AudioSource _audioSource;
     private bool _isDead = false;
+    private Coroutine _spinCoroutine;
 
     private void Awake()
     {
@@ -56,11 +63,15 @@ public class DeerAnimationAndSoundController : MonoBehaviour
     {
         if (_isDead) return;
 
-        _animator.SetBool(ANIM_RUN, false);
-        _animator.SetBool(ANIM_JUMP, false);
-        _animator.SetBool(ANIM_SPIN, false);
-        _animator.SetBool(ANIM_IDLE, true);
-        _animator.SetFloat(ANIM_SPEED, 0f);
+        // Stop any ongoing spin coroutine
+        if (_spinCoroutine != null)
+        {
+            StopCoroutine(_spinCoroutine);
+            _spinCoroutine = null;
+        }
+
+        // Play one of the idle animations
+        PlayAnimation(ANIM_IDLE_A);
     }
 
     /// <summary>
@@ -71,11 +82,17 @@ public class DeerAnimationAndSoundController : MonoBehaviour
     {
         if (_isDead) return;
 
-        _animator.SetBool(ANIM_IDLE, false);
-        _animator.SetBool(ANIM_JUMP, false);
-        _animator.SetBool(ANIM_SPIN, false);
-        _animator.SetBool(ANIM_RUN, true);
-        _animator.SetFloat(ANIM_SPEED, speed);
+        // Stop any ongoing spin coroutine
+        if (_spinCoroutine != null)
+        {
+            StopCoroutine(_spinCoroutine);
+            _spinCoroutine = null;
+        }
+
+        PlayAnimation(ANIM_RUN);
+        
+        // Although we don't use a Speed parameter, we can adjust animation speed using the Animator
+        _animator.speed = speed;
     }
 
     /// <summary>
@@ -85,10 +102,17 @@ public class DeerAnimationAndSoundController : MonoBehaviour
     {
         if (_isDead) return;
 
-        _animator.SetBool(ANIM_IDLE, false);
-        _animator.SetBool(ANIM_RUN, false);
-        _animator.SetBool(ANIM_SPIN, false);
-        _animator.SetBool(ANIM_JUMP, true);
+        // Stop any ongoing spin coroutine
+        if (_spinCoroutine != null)
+        {
+            StopCoroutine(_spinCoroutine);
+            _spinCoroutine = null;
+        }
+
+        PlayAnimation(ANIM_JUMP);
+        
+        // Freeze the animation on the last frame to prevent looping
+        StartCoroutine(FreezeJumpAnimation());
 
         // Play jump sound
         if (_jumpSound != null)
@@ -111,11 +135,14 @@ public class DeerAnimationAndSoundController : MonoBehaviour
 
         _isDead = true;
         
-        _animator.SetBool(ANIM_IDLE, false);
-        _animator.SetBool(ANIM_RUN, false);
-        _animator.SetBool(ANIM_JUMP, false);
-        _animator.SetBool(ANIM_SPIN, false);
-        _animator.SetBool(ANIM_DEATH, true);
+        // Stop any ongoing spin coroutine
+        if (_spinCoroutine != null)
+        {
+            StopCoroutine(_spinCoroutine);
+            _spinCoroutine = null;
+        }
+        
+        PlayAnimation(ANIM_DEATH);
 
         // Play death sound
         if (_deathSound != null)
@@ -129,16 +156,20 @@ public class DeerAnimationAndSoundController : MonoBehaviour
     }
 
     /// <summary>
-    /// Plays the deer's spin animation and triggers the powerup sound effect
+    /// Plays the deer's spin animation for about 1 second and triggers the powerup sound effect
     /// </summary>
     public void TakeAntidote()
     {
         if (_isDead) return;
 
-        _animator.SetBool(ANIM_IDLE, false);
-        _animator.SetBool(ANIM_RUN, false);
-        _animator.SetBool(ANIM_JUMP, false);
-        _animator.SetBool(ANIM_SPIN, true);
+        // Stop any ongoing spin coroutine
+        if (_spinCoroutine != null)
+        {
+            StopCoroutine(_spinCoroutine);
+        }
+        
+        // Start a new spin coroutine
+        _spinCoroutine = StartCoroutine(PlaySpinAnimation());
 
         // Play antidote/powerup sound
         if (_antidoteSound != null)
@@ -149,7 +180,60 @@ public class DeerAnimationAndSoundController : MonoBehaviour
         {
             Debug.LogWarning("Antidote sound is not assigned to the DeerAnimationAndSoundController.");
         }
+    }
 
-        // This animation returns to idle automatically through the animation state machine or events
+    /// <summary>
+    /// Helper method to play an animation by name using the animator's Play method
+    /// </summary>
+    private void PlayAnimation(string animationName)
+    {
+        // We use the state name directly instead of setting parameters
+        // This utilizes the deer model's built-in animations
+        _animator.Play(animationName, 0, 0f);
+        
+        // Reset animation speed if it was changed
+        if (animationName != ANIM_RUN)
+        {
+            _animator.speed = 1f;
+        }
+    }
+    
+    /// <summary>
+    /// Coroutine to handle the spin animation duration
+    /// </summary>
+    private IEnumerator PlaySpinAnimation()
+    {
+        // Play the spin animation
+        PlayAnimation(ANIM_SPIN);
+        
+        // Wait for the specified duration
+        yield return new WaitForSeconds(_spinDuration);
+        
+        // Return to idle if not dead
+        if (!_isDead)
+        {
+            SetIdle();
+        }
+        
+        _spinCoroutine = null;
+    }
+    
+    /// <summary>
+    /// Coroutine to freeze the jump animation at the end (prevent looping)
+    /// </summary>
+    private IEnumerator FreezeJumpAnimation()
+    {
+        // Get the animation clip info to find its length
+        AnimatorClipInfo[] clipInfo = _animator.GetCurrentAnimatorClipInfo(0);
+        if (clipInfo.Length > 0)
+        {
+            float jumpDuration = clipInfo[0].clip.length;
+            
+            // Wait until near the end of the jump animation
+            yield return new WaitForSeconds(jumpDuration * 0.95f);
+            
+            // Freeze the animation at the current point
+            _animator.speed = 0;
+        }
     }
 } 
