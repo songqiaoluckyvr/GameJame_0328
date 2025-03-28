@@ -449,3 +449,27 @@ For sounds to work with Resources.Load, they need to be in a folder called "Reso
 - If your sound files are in "Assets/Resources/Sounds/FX54.mp3", you'd use path "Sounds/FX54"
 
 The new system will try to find the sounds automatically, but also lets you manually specify the paths in the Inspector if needed.
+
+**Rikard**: What are you doing, the sounds are in "\Assets\Universal UI, Game & Notification Sound Effects" and they are wave files. Make sure they exist and you are using correct path.
+
+## Sound Effect Integration Fix
+**Assistant**: After identifying the correct location of the sound files, I've updated the `DeerAnimationAndSoundController` script to properly load sounds from their actual locations. The key changes include:
+
+1. **Updated sound file paths to point to actual location**:
+   ```csharp
+   private const string SOUND_BASE_PATH = "Universal UI, Game & Notification Sound Effects";
+   private const string SOUND_JUMP = "FX48 - Click 2.wav";
+   private const string SOUND_DEATH = "FX54.wav";
+   private const string SOUND_ANTIDOTE = "FX57.wav";
+   ```
+
+2. **Created a direct asset loading system**:
+   - Using Unity's AssetDatabase in Editor mode to directly load the audio clips
+   - Implemented runtime support using UnityWebRequest for builds
+   - Providing clear diagnostic messages about paths and load results
+
+3. **Fixed warnings to reference the correct file paths**:
+   - Each warning now references the actual file name with extension
+   - Added logging of successful load attempts
+
+This implementation directly accesses the sound files in their actual location without requiring them to be in a Resources folder.
