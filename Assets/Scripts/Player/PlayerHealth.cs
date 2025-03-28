@@ -7,15 +7,16 @@ public class PlayerHealth : MonoBehaviour
     [Header("Health Settings")]
     [SerializeField] private float _maxHealth = 100f;
     [SerializeField] private float _startingHealth = 100f;
-    [SerializeField] private float _healthDrainRate = 5f;
+    [SerializeField] private float _healthDrainRate = 1f;
     [SerializeField] private float _antidoteHealthRestore = 40f;
     [SerializeField] private float _criticalHealthThreshold = 30f;
+    [SerializeField] private bool _debugMode = true;
     #endregion
 
     #region Events
     public event Action OnHealthDepleted;
     public event Action OnAntidoteCollected;
-    public event Action<float> OnHealthChanged;
+    public event Action<float, float> OnHealthChanged; // Current health, max health
     public event Action OnCriticalHealth;
     #endregion
 
@@ -23,6 +24,7 @@ public class PlayerHealth : MonoBehaviour
     private float _currentHealth;
     private bool _isDead;
     private bool _isInCriticalHealth;
+    private bool _isDrainPaused;
     #endregion
 
     #region Properties
@@ -40,10 +42,17 @@ public class PlayerHealth : MonoBehaviour
 
     private void Update()
     {
-        if (_isDead) return;
+        if (_isDead || _isDrainPaused) return;
 
         DrainHealth();
         CheckCriticalHealth();
+
+        // Debug health addition
+        if (Input.GetKeyDown(KeyCode.Alpha0) || Input.GetKeyDown(KeyCode.Keypad0))
+        {
+            ModifyHealth(10f);
+            if (_debugMode) Debug.Log($"[PlayerHealth] Added 10 health. Current health: {_currentHealth}");
+        }
     }
     #endregion
 
@@ -57,8 +66,13 @@ public class PlayerHealth : MonoBehaviour
     {
         if (_isDead) return;
 
+        float previousHealth = _currentHealth;
         _currentHealth = Mathf.Clamp(_currentHealth + amount, 0f, _maxHealth);
-        OnHealthChanged?.Invoke(_currentHealth);
+
+        if (_currentHealth != previousHealth)
+        {
+            OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
+        }
 
         if (_currentHealth <= 0f && !_isDead)
         {
@@ -94,13 +108,17 @@ public class PlayerHealth : MonoBehaviour
         _currentHealth = _startingHealth;
         _isDead = false;
         _isInCriticalHealth = false;
-        OnHealthChanged?.Invoke(_currentHealth);
+        _isDrainPaused = false;
+        OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
     }
 
     public void SetDrainRate(float newRate)
     {
         _healthDrainRate = Mathf.Max(0f, newRate);
     }
+
+    public void PauseDrain() => _isDrainPaused = true;
+    public void ResumeDrain() => _isDrainPaused = false;
     #endregion
 
     #region Collision Detection
