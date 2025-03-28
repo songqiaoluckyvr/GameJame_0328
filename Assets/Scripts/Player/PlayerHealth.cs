@@ -7,7 +7,7 @@ public class PlayerHealth : MonoBehaviour
     [Header("Health Settings")]
     [SerializeField] private float _maxHealth = 100f;
     [SerializeField] private float _startingHealth = 100f;
-    [SerializeField] private float _healthDrainRate = 1f;
+    [SerializeField] private float _healthDrainRate = 5f;
     [SerializeField] private float _antidoteHealthRestore = 20f;
     [SerializeField] private float _criticalHealthThreshold = 30f;
     [SerializeField] private bool _debugMode = false;
